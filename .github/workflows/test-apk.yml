@@ -8,7 +8,7 @@ on:
     branches: [test/danish-apk]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -42,3 +42,13 @@ jobs:
           name: kalender-dansk-test
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 14
+      - name: Publish as direct download (pre-release)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk kalender-dansk-test.apk
+          gh release delete test-dansk -R "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
+          gh release create test-dansk kalender-dansk-test.apk -R "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "Dansk testversion" \
+            --notes "Testversion af Nextcloud Calendar med dansk oversættelse. Kun til test."
