@@ -55,7 +55,7 @@ const DayHeader = memo(({ sectionDate, hasEvents, theme, onPress }: DayHeaderPro
       </View>
       <View>
         <Text style={[styles.dayName, { color: isToday ? theme.colors.primary : theme.colors.textSecondary }]}>
-          {d.format('ddd').toUpperCase()}
+          {`${d.format('ddd')} · ${d.format('MMM')}`.toUpperCase()}
         </Text>
         {isToday && <Text style={[styles.todayLabel, { color: theme.colors.primary }]}>{t('calendar.today')}</Text>}
       </View>
