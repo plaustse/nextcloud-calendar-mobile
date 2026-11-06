@@ -1,0 +1,33 @@
+# Lægger den færdigbyggede test-APK ud som en direkte download (GitHub Release).
+# Kun i forken – kommer ikke med i pull requesten.
+name: Udgiv test-APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [test/danish-apk]
+    paths: [.github/workflows/publish-test-apk.yml]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: kalender-dansk-test
+          run-id: 42196511308
+          github-token: ${{ github.token }}
+      - name: Create pre-release with the APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mv app-release.apk kalender-dansk-test.apk
+          gh release delete test-dansk -R "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
+          gh release create test-dansk kalender-dansk-test.apk -R "$GITHUB_REPOSITORY" \
+            --target test/danish-apk --prerelease \
+            --title "Dansk testversion" \
+            --notes "Testversion af Nextcloud Calendar med dansk oversættelse. Kun til test."
