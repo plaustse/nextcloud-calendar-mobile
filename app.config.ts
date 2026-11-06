@@ -19,7 +19,7 @@ if (versionCode !== major * 10000 + minor * 100 + patch) {
 }
 
 const config: ExpoConfig = {
-    name: 'Nextcloud Calendar',
+    name: 'Kalender (dansk test)',
     slug: 'nextcloud-calendar',
     scheme: 'nextcloud-calendar',
     version,
@@ -49,7 +49,7 @@ const config: ExpoConfig = {
     },
 
     android: {
-        package: 'com.soluce.nextcloudcalendar',
+        package: 'com.soluce.nextcloudcalendar.datest',
         versionCode,
         permissions: ['USE_EXACT_ALARM', 'SCHEDULE_EXACT_ALARM'],
         adaptiveIcon: {
