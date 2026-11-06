@@ -1,5 +1,6 @@
 import { createRef } from 'react';
 import { FlatList } from 'react-native';
+import dayjs from 'dayjs';
 import { render as rtlRender } from '@testing-library/react-native';
 import { ThemeWrapper } from '../../helpers/theme';
 import { AgendaView, type AgendaViewHandle } from '@/features/calendar/components/AgendaView';
@@ -99,5 +100,21 @@ describe('AgendaView scrollToToday', () => {
     list.props.onScrollEndDrag();
 
     expect(scrollSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('AgendaView day headers', () => {
+  it('shows the month next to the weekday', () => {
+    const screen = render(
+      <AgendaView
+        events={[]}
+        date={new Date()}
+        onPressEvent={jest.fn()}
+        onPressCell={jest.fn()}
+      />,
+    );
+    const today = dayjs();
+    const label = `${today.format('ddd')} · ${today.format('MMM')}`.toUpperCase();
+    expect(screen.getAllByText(label).length).toBeGreaterThan(0);
   });
 });
