@@ -121,7 +121,6 @@ export async function syncCalendars(account: Account): Promise<CalendarMeta[]> {
         const existing = await calendars.query(Q.where('account_id', account.id)).fetch();
         const byRemote = new Map(existing.map((r) => [r.remoteId, r]));
         const seen = new Set<string>();
-        const recolored = new Map<string, string>();
         const ops = [];
 
         for (const c of remote) {
@@ -130,23 +129,28 @@ export async function syncCalendars(account: Account): Promise<CalendarMeta[]> {
             if (!found) {
                 ops.push(calendars.prepareCreate((r: Calendar) => writeCalendar(r, c, account.id)));
             } else if (!calendarUnchanged(found, c)) {
-                if (found.color !== c.color) recolored.set(c.id, c.color);
                 ops.push(found.prepareUpdate((r: Calendar) => writeCalendar(r, c, account.id)));
             }
         }
 
         // Event rows cache their calendar's color. A calendar color change on the
         // server doesn't touch the events themselves (no new sync-token / etag), so
-        // the delta sync never rewrites them: recolor them here.
-        if (recolored.size > 0) {
+        // the delta sync never rewrites them. Reconcile on every calendar sync, not
+        // only when the change is seen, so rows left stale earlier heal too.
+        const colorByCalendar = new Map(remote.map((c) => [c.id, c.color]));
+        if (colorByCalendar.size > 0) {
             const stale = await events
                 .query(
                     Q.where('account_id', account.id),
-                    Q.where('calendar_id', Q.oneOf([...recolored.keys()])),
+                    Q.or(
+                        ...[...colorByCalendar].map(([id, color]) =>
+                            Q.and(Q.where('calendar_id', id), Q.where('color', Q.notEq(color))),
+                        ),
+                    ),
                 )
                 .fetch();
             for (const ev of stale) {
-                const color = recolored.get(ev.calendarId);
+                const color = colorByCalendar.get(ev.calendarId);
                 if (color !== undefined && ev.color !== color) {
                     ops.push(ev.prepareUpdate((r: Event) => { r.color = color; }));
                 }
